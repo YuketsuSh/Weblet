@@ -77,7 +77,7 @@ node manager.js
 Tu entreras dans un shell personnalisé :
 
 ```
-🌐 Weblet CLI – Gestionnaire de sites
+🌐 Webhost CLI – Gestionnaire de sites
 
 webhost> create monsite sites/monsite 8080
 webhost> list
@@ -143,13 +143,6 @@ Pour l'utiliser avec des frameworks modernes, assurez-vous d’avoir **build** v
 * Reverse Proxy natif
 * Déploiement en container
 * Système de logs par site
-
----
-
-## 🧑‍💻 Auteur
-
-Développé par **Yuketsu**
-Un outil conçu pour simplifier l'hébergement de sites statiques.
 
 ---
 
