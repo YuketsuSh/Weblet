@@ -1,0 +1,37 @@
+{
+  "name": "weblet",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "cli": "node manager.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webserver",
+    "cli",
+    "static",
+    "hosting",
+    "polka",
+    "multi-site",
+    "weblet",
+    "nodejs"
+  ],
+  "author": "YuketsuSh",
+  "license": "MIT",
+  "description": "Weblet est un serveur web multi-sites léger pour héberger des sites statiques (React, Vue, etc.) avec une interface CLI inspirée de Nginx/Apache.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YuketsuSh/Weblet"
+  },
+  "bugs": {
+    "url": "https://github.com/YuketsuSh/Weblet/issues"
+  },
+  "homepage": "https://github.com/YuketsuSh/Weblet#readme",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "polka": "^0.5.2",
+    "serve-static": "^2.2.0",
+    "sirv": "^3.0.1"
+  }
+}

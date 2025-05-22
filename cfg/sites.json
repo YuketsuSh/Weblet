@@ -1,0 +1,7 @@
+[
+  {
+    "name": "example",
+    "port": 9768,
+    "directory": "web/example"
+  }
+]
