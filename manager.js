@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { execSync } = require('child_process');
+const polka = require('polka');
 
 const CONFIG_PATH = path.join(__dirname, 'cfg/sites.json');
 
@@ -25,6 +26,10 @@ function portInUse(port) {
 }
 
 function createSite(name, directory, port) {
+  if (!name || !directory || !port) {
+    logError('Syntaxe : create <nom> <path> <port>');
+    return;
+  }
   const sites = loadConfig();
   if (sites.find(site => site.name === name)) return logError(`Le site "${name}" existe déjà.`);
   if (portInUse(port)) return logError(`Le port ${port} est déjà utilisé.`);
@@ -34,6 +39,10 @@ function createSite(name, directory, port) {
 }
 
 function deleteSite(name) {
+  if (!name){
+    logError('Syntaxe: delete <nom>')
+    return;
+  }
   let sites = loadConfig();
   const site = sites.find(s => s.name === name);
   if (!site) return logError(`Site "${name}" introuvable.`);
@@ -43,6 +52,10 @@ function deleteSite(name) {
 }
 
 function updateSite(name, port, directory) {
+  if (!name) {
+    logError('Syntaxe : update <nom> <port?> <path?>');
+    return;
+  }
   const sites = loadConfig();
   const site = sites.find(s => s.name === name);
   if (!site) return logError(`Site "${name}" introuvable.`);
@@ -54,6 +67,10 @@ function updateSite(name, port, directory) {
 }
 
 function healthCheck(name) {
+  if (!name) {
+    logError('Syntaxe : health <nom>');
+    return;
+  }
   const sites = loadConfig();
   const site = sites.find(s => s.name === name);
   if (!site) return logError(`Site "${name}" introuvable.`);
