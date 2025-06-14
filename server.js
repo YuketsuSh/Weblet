@@ -2,17 +2,28 @@ const polka = require('polka');
 const serve = require('serve-static');
 const path = require('path');
 const fs = require('fs');
+const send = require('send');
 let servers = [];
 
 function createSiteServer({ name, port, directory }) {
   const sitePath = path.resolve(__dirname, directory);
   const app = polka();
 
-  app.use(serve(sitePath));
+  app.use(serve(sitePath, {
+    extensions: ['html'],
+  }));
+
   app.get('*', (req, res) => {
-    fs.readFile(path.join(sitePath, 'index.html'), (err, data) => {
-      res.writeHead(err ? 500 : 200, { 'Content-Type': 'text/html' });
-      res.end(err ? `Erreur serveur (${name})` : data);
+    const indexPath = path.join(sitePath, 'index.html');
+    fs.readFile(indexPath, (err, data) => {
+      if (err) {
+        console.error(`❌ Erreur pour le site "${name}" :`, err.message);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end(`Erreur serveur (${name}) : ${err.message}`);
+      } else {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(data);
+      }
     });
   });
 
@@ -43,7 +54,7 @@ function stopServers() {
 
 startServers();
 
-fs.watchFile('./cfg/sites.json', (curr, prev) => {
+fs.watchFile('./cfg/sites.json', () => {
   console.log('🔁 Config modifiée. Rechargement des sites...');
   startServers();
 });
