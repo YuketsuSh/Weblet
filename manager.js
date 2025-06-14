@@ -3,8 +3,7 @@ const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { execSync } = require('child_process');
-const polka = require('polka');
+const { execSync, spawn } = require('child_process');
 
 const CONFIG_PATH = path.join(__dirname, 'cfg/sites.json');
 
@@ -104,6 +103,7 @@ Commandes disponibles :
   list                        Afficher tous les sites
   health <nom>                Vérifier un site
   health-all                  Vérifier tous les sites
+  ui <on|off>                 Lancer le gestionnaire web (UI)
   help                        Afficher l’aide
   exit / quit                 Quitter le CLI
 `));
@@ -128,6 +128,8 @@ const rl = readline.createInterface({
   output: process.stdout,
   prompt: chalk.cyan('webhost> ')
 });
+
+let webManagerProcess = null;
 
 rl.prompt();
 
@@ -160,6 +162,36 @@ rl.on('line', (line) => {
     case 'quit':
       rl.close();
       return;
+    case 'ui':
+      if (!args[0]) {
+        logError('Syntaxe : ui <on|off>');
+        break;
+      }
+      if (args[0] === 'on') {
+        if(webManagerProcess){
+          logInfo('🌐 Web Manager déjà lancé');
+        }else if (portInUse(6696)){
+          logInfo('🌐 Web Manager déjà en ligne sur http://localhost:6696');
+        }else{
+          webManagerProcess = spawn('node', ['web-manager.js'], {
+            detached: true,
+            stdio: 'ignore',
+          });
+          webManagerProcess.unref();
+          logSuccess('🧩 Web Manager lancé sur http://localhost:6696');
+        }
+      }else if (args[0] === 'off') {
+        if (webManagerProcess) {
+          process.kill(-webManagerProcess.pid);
+          webManagerProcess = null;
+          logInfo('🛑 Web Manager arrêté');
+        }else{
+          logInfo('🌐 Web Manager n’est pas lancé');
+        }
+      }else{
+        logError('Syntaxe : ui <on|off>');
+      }
+      break;
     default:
       console.log(chalk.red(`Commande inconnue : ${cmd}`));
       showHelp();
