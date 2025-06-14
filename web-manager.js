@@ -53,6 +53,32 @@ app.post('/api/sites', (req, res) => {
     }
 });
 
+app.put('/api/sites/:name', (req, res) => {
+    const { name } = req.params;
+    const { port, directory } = req.body;
+    try {
+        const sites = loadConfig();
+        const site = sites.find(s => s.name === name);
+        if (!site) {
+            res.writeHead(404);
+            return res.end(JSON.stringify({ error: 'Site introuvable.' }));
+        }
+        if (port && port !== site.port && sites.find(s => s.port === port)) {
+            res.writeHead(409);
+            return res.end(JSON.stringify({ error: 'Port déjà utilisé.' }));
+        }
+        if (port) site.port = port;
+        if (directory) site.directory = directory;
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(sites, null, 2));
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true }));
+    } catch {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Erreur serveur.' }));
+    }
+});
+
+
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end(fs.readFileSync(path.join(__dirname, 'webmanager-static/index.html')));
