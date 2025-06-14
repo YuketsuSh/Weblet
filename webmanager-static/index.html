@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Web Manager Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Glassmorphism backdrop */
+        .glass {
+            background: rgba(20, 20, 30, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="h-full flex text-gray-300 font-sans">
+
+<!-- Sidebar -->
+<nav id="sidebar"
+     class="fixed inset-y-0 left-0 w-64 p-6 pt-10 flex flex-col
+              transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40
+              glass rounded-r-lg shadow-lg
+              md:flex-shrink-0
+              select-none">
+    <h1 class="text-3xl font-extrabold mb-10 text-cyan-400 tracking-wide">🌐 Web Manager</h1>
+    <ul class="flex flex-col space-y-6 flex-grow">
+        <li>
+            <button data-tab="dashboard"
+                    class="tab-btn w-full text-left py-3 px-5 rounded-lg text-cyan-300 font-medium
+                       hover:bg-cyan-600 hover:text-white transition
+                       focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                Dashboard
+            </button>
+        </li>
+        <li>
+            <button data-tab="sites-list"
+                    class="tab-btn w-full text-left py-3 px-5 rounded-lg text-cyan-300 font-medium
+                       hover:bg-cyan-600 hover:text-white transition
+                       focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                Sites
+            </button>
+        </li>
+        <li>
+            <button data-tab="site-form"
+                    class="tab-btn w-full text-left py-3 px-5 rounded-lg text-cyan-300 font-medium
+                       hover:bg-cyan-600 hover:text-white transition
+                       focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                Créer / Éditer site
+            </button>
+        </li>
+    </ul>
+
+    <button id="sidebar-toggle"
+            class="md:hidden mt-auto text-sm bg-cyan-700 hover:bg-cyan-800 text-white px-4 py-2 rounded-lg
+                   transition-shadow shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
+        ☰ Menu
+    </button>
+</nav>
+
+<!-- Overlay mobile -->
+<div id="overlay" class="fixed inset-0 bg-black bg-opacity-70 hidden z-30 md:hidden"></div>
+
+<!-- Main Content -->
+<div class="flex-1 flex flex-col md:ml-64 min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+
+    <header class="flex justify-between items-center px-6 py-4 glass shadow-md select-none">
+        <button id="mobile-menu-btn" class="md:hidden text-cyan-400 text-3xl font-extrabold focus:outline-none">☰</button>
+        <h2 class="text-cyan-400 text-2xl font-bold tracking-widest select-text">WEB MANAGER DASHBOARD</h2>
+        <div></div>
+    </header>
+
+    <main class="flex-grow overflow-auto p-6">
+
+        <!-- Message -->
+        <div id="message" class="mb-6 text-center text-lg"></div>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="tab-content">
+            <h3 class="text-3xl font-extrabold mb-6 text-cyan-400 tracking-wide">Statut Global</h3>
+            <div id="global-health-status"
+                 class="glass p-6 rounded-xl shadow-lg space-y-6 min-h-[12rem] text-lg font-mono
+                    border border-cyan-700">
+                <p class="text-cyan-400 italic">Chargement des statuts...</p>
+            </div>
+        </section>
+
+        <!-- Sites List Section -->
+        <section id="sites-list" class="tab-content hidden">
+            <h3 class="text-3xl font-extrabold mb-6 text-cyan-400 tracking-wide">Liste des Sites</h3>
+            <ul id="sites-list-ul" class="space-y-5">
+                <!-- Sites dynamically loaded here -->
+            </ul>
+        </section>
+
+        <!-- Site Form Section -->
+        <section id="site-form" class="tab-content hidden max-w-xl mx-auto glass p-8 rounded-2xl shadow-lg border border-cyan-700">
+            <h3 id="form-title" class="text-3xl font-extrabold mb-8 text-cyan-400 tracking-wide">Créer un site</h3>
+            <form id="site-form-el" class="space-y-8">
+                <div>
+                    <label for="name" class="block text-cyan-300 font-semibold mb-2 tracking-wide">Nom</label>
+                    <input id="name" name="name" type="text" required
+                           class="w-full rounded-lg bg-transparent border border-cyan-600 px-4 py-3
+                          text-cyan-100 placeholder-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-400
+                          transition" placeholder="Nom du site" />
+                </div>
+                <div>
+                    <label for="directory" class="block text-cyan-300 font-semibold mb-2 tracking-wide">Répertoire</label>
+                    <input id="directory" name="directory" type="text" required
+                           class="w-full rounded-lg bg-transparent border border-cyan-600 px-4 py-3
+                          text-cyan-100 placeholder-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-400
+                          transition" placeholder="Chemin du répertoire" />
+                </div>
+                <div>
+                    <label for="port" class="block text-cyan-300 font-semibold mb-2 tracking-wide">Port</label>
+                    <input id="port" name="port" type="number" required
+                           class="w-full rounded-lg bg-transparent border border-cyan-600 px-4 py-3
+                          text-cyan-100 placeholder-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-400
+                          transition" placeholder="Numéro de port" />
+                </div>
+
+                <div class="flex space-x-6 justify-end">
+                    <button type="submit"
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-lg font-semibold
+                           shadow-lg transition">Enregistrer</button>
+                    <button type="button" id="cancel-btn"
+                            class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-8 py-3 rounded-lg font-semibold
+                           shadow-lg transition hidden">Annuler</button>
+                </div>
+            </form>
+        </section>
+
+    </main>
+</div>
+
+<!-- Modal suppression -->
+<div id="modal"
+     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 hidden z-50">
+    <div class="glass rounded-xl shadow-2xl max-w-md w-full p-8 text-center border border-cyan-700">
+        <h4 class="text-2xl font-extrabold mb-6 text-cyan-400">Confirmer la suppression</h4>
+        <p class="mb-8 text-cyan-300 font-mono" id="modal-text">Voulez-vous vraiment supprimer ce site ?</p>
+        <div class="flex justify-center space-x-10">
+            <button id="modal-cancel"
+                    class="px-6 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold
+                       transition-shadow shadow-md">Annuler</button>
+            <button id="modal-confirm"
+                    class="px-6 py-3 rounded-lg bg-red-700 hover:bg-red-800 text-white font-extrabold
+                       transition-shadow shadow-lg">Supprimer</button>
+        </div>
+    </div>
+</div>
+
+<script src="assets/webmanager.js"></script>
+</body>
+</html>
