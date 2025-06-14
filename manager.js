@@ -130,12 +130,40 @@ function isWebManagerRunning() {
   if (!fs.existsSync(pidFile)) return false;
   try {
     const pid = Number(fs.readFileSync(pidFile, 'utf-8'));
-    process.kill(pid, 0); // Vérifie si le process existe sans le tuer
+    process.kill(pid, 0);
     return pid;
   } catch {
-    fs.unlinkSync(pidFile); // PID invalide, supprime le fichier
+    fs.unlinkSync(pidFile);
     return false;
   }
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function waitForProcessToExit(pid, timeout = 5000) {
+  const start = Date.now();
+  while (true) {
+    try {
+      process.kill(pid, 0);
+      if (Date.now() - start > timeout) {
+        return false;
+      }
+      await wait(200);
+    } catch {
+      return true;
+    }
+  }
+}
+
+async function waitPortFree(port, timeout = 5000) {
+  const start = Date.now();
+  while (portInUse(port)) {
+    if (Date.now() - start > timeout) return false;
+    await wait(200);
+  }
+  return true;
 }
 
 console.clear();
@@ -191,7 +219,8 @@ rl.on('line', (line) => {
           logInfo(`🌐 Web Manager déjà lancé (PID: ${runningPid}) sur http://localhost:6696`);
           break;
         }
-        if (portInUse(6696)) {
+        const free = waitPortFree(6696);
+        if (!free) {
           logInfo('🌐 Port 6696 déjà utilisé, impossible de lancer le Web Manager.');
           break;
         }
@@ -209,8 +238,21 @@ rl.on('line', (line) => {
           break;
         }
         try {
-          process.kill(runningPid);
-          fs.unlinkSync(pidFile);
+          if (os.platform() === 'win32') {
+            execSync(`taskkill /PID ${runningPid} /F`);
+          } else {
+            process.kill(runningPid, 'SIGTERM');
+          }
+
+          const exited = waitForProcessToExit(runningPid);
+          if (!exited) {
+            logError('Le processus Web Manager ne s’est pas arrêté à temps.');
+            break;
+          }
+
+          if (fs.existsSync(pidFile)) {
+            fs.unlinkSync(pidFile);
+          }
           logInfo('🛑 Web Manager arrêté');
         } catch (err) {
           logError(`Erreur lors de l'arrêt du Web Manager : ${err.message}`);

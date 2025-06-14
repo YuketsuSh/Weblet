@@ -15,7 +15,7 @@ function loadConfig() {
 
 const app = polka();
 
-app.use('/static', serveStatic(path.join(__dirname, 'webmanager-static')));
+app.use('/', serveStatic(path.join(__dirname, 'webmanager-static')));
 app.use(bodyParser.json());
 
 app.get('/api/sites', (req, res) => {
@@ -28,6 +28,25 @@ app.get('/api/sites', (req, res) => {
         res.end(JSON.stringify({ error: 'Impossible de charger la config.' }));
     }
 });
+
+app.get('/api/sites/:name', (req, res) => {
+    const { name } = req.params;
+    try {
+        const sites = loadConfig();
+        const site = sites.find(s => s.name === name);
+        if (!site) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ error: 'Site introuvable.' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(site));
+    } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Erreur serveur.' }));
+    }
+});
+
 
 app.post('/api/sites', (req, res) => {
     const { name, directory, port } = req.body;
@@ -155,11 +174,13 @@ app.get('/api/health/:name', (req, res) => {
     });
 });
 
-app.get('/', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.end(fs.readFileSync(path.join(__dirname, 'webmanager-static/index.html')));
+const server = app.listen(PORT, () => {
+    console.log(`🌐 Web Manager UI lancé sur http://localhost:${PORT}`);
 });
 
-app.listen(PORT, () => {
-    console.log(`🌐 Web Manager UI lancé sur http://localhost:${PORT}`);
+process.on('SIGTERM', () => {
+    server.close(() => {
+        console.log('Serveur fermé proprement.');
+        process.exit(0);
+    });
 });
