@@ -6,13 +6,23 @@ const fs = require('fs');
 const PORT = 6696;
 const CONFIG_PATH = path.join(__dirname, 'cfg/sites.json');
 
+function loadConfig() {
+    return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+}
+
 const app = polka();
 
 app.use('/static', serveStatic(path.join(__dirname, 'webmanager-static')));
 
 app.get('/api/sites', (req, res) => {
-    const sites = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
-    res.end(JSON.stringify(sites));
+    try {
+        const sites = loadConfig();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(sites));
+    } catch (err) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Impossible de charger la config.' }));
+    }
 });
 
 app.get('/', (req, res) => {
