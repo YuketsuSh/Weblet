@@ -3,6 +3,8 @@ const serveStatic = require('serve-static');
 const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
+const http = require('http');
+
 
 const PORT = 6696;
 const CONFIG_PATH = path.join(__dirname, 'cfg/sites.json');
@@ -95,6 +97,62 @@ app.delete('/api/sites/:name', (req, res) => {
         res.writeHead(500);
         res.end(JSON.stringify({ error: 'Erreur serveur.' }));
     }
+});
+
+app.get('/api/health-all', (req, res) => {
+    const sites = loadConfig();
+    if (sites.length === 0) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify([]));
+    }
+
+    let results = [];
+    let completed = 0;
+
+    sites.forEach(site => {
+        http.get(`http://localhost:${site.port}`, (response) => {
+            results.push({
+                name: site.name,
+                port: site.port,
+                status: response.statusCode
+            });
+            completed++;
+            if (completed === sites.length) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(results));
+            }
+        }).on('error', () => {
+            results.push({
+                name: site.name,
+                port: site.port,
+                status: 'offline'
+            });
+            completed++;
+            if (completed === sites.length) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(results));
+            }
+        });
+    });
+});
+
+app.get('/api/health/:name', (req, res) => {
+    const name = req.params.name;
+    const sites = loadConfig();
+    const site = sites.find(s => s.name === name);
+
+    if (!site) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: `Site "${name}" introuvable.` }));
+    }
+
+    http.get(`http://localhost:${site.port}`, (response) => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ name: site.name, port: site.port, status: response.statusCode }));
+    }).on('error', () => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ name: site.name, port: site.port, status: 'offline' }));
+    });
 });
 
 app.get('/', (req, res) => {
