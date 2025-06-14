@@ -78,6 +78,24 @@ app.put('/api/sites/:name', (req, res) => {
     }
 });
 
+app.delete('/api/sites/:name', (req, res) => {
+    const { name } = req.params;
+    try {
+        let sites = loadConfig();
+        const siteExists = sites.some(s => s.name === name);
+        if (!siteExists) {
+            res.writeHead(404);
+            return res.end(JSON.stringify({ error: 'Site introuvable.' }));
+        }
+        sites = sites.filter(s => s.name !== name);
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(sites, null, 2));
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true }));
+    } catch {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Erreur serveur.' }));
+    }
+});
 
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
