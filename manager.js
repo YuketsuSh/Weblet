@@ -5,8 +5,12 @@ const path = require('path');
 const http = require('http');
 const { execSync, spawn } = require('child_process');
 const os = require('os');
+const crypto = require('crypto');
+
 
 const CONFIG_PATH = path.join(__dirname, 'cfg/sites.json');
+const USERS_PATH = path.join(__dirname, 'cfg/users.json');
+
 const pidFile = path.join(__dirname, 'web-manager.pid');
 
 function loadConfig() {
@@ -100,6 +104,37 @@ function listSites() {
   });
 }
 
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+function loadUsers() {
+  if (!fs.existsSync(USERS_PATH)) return [];
+  return JSON.parse(fs.readFileSync(USERS_PATH, 'utf-8'));
+}
+
+function saveUsers(users) {
+  fs.writeFileSync(USERS_PATH, JSON.stringify(users, null, 2));
+}
+
+function addUser(name, password) {
+  if (!name || !password) return logError('Syntaxe : adduser <nom> <motdepasse>');
+  const users = loadUsers();
+  if (users.find(u => u.name === name)) return logError(`Utilisateur "${name}" existe déjà.`);
+  users.push({ name, hash: hashPassword(password) });
+  saveUsers(users);
+  logSuccess(`Utilisateur "${name}" ajouté.`);
+}
+
+function removeUser(name) {
+  if (!name) return logError('Syntaxe : removeuser <nom>');
+  let users = loadUsers();
+  if (!users.find(u => u.name === name)) return logError(`Utilisateur "${name}" introuvable.`);
+  users = users.filter(u => u.name !== name);
+  saveUsers(users);
+  logInfo(`Utilisateur "${name}" supprimé.`);
+}
+
 function showHelp() {
   console.log(chalk.green(`
 Commandes disponibles :
@@ -111,6 +146,8 @@ Commandes disponibles :
   health <nom>                Vérifier un site
   health-all                  Vérifier tous les sites
   ui <on|off>                 Lancer/Arrêter le gestionnaire web (UI)
+  adduser <nom> <motdepasse>   Ajouter un utilisateur
+  removeuser <nom>             Supprimer un utilisateur
   help                        Afficher l’aide
   exit / quit                 Quitter le CLI
 `));
@@ -199,6 +236,12 @@ rl.on('line', (line) => {
       break;
     case 'health-all':
       healthAll();
+      break;
+    case 'adduser':
+      addUser(args[0], args[1]);
+      break;
+    case 'removeuser':
+      removeUser(args[0]);
       break;
     case 'help':
       showHelp();
