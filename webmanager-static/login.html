@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion - Web Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glass {
+            background: rgba(20, 20, 30, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="h-full flex items-center justify-center text-gray-300 font-sans">
+
+<div class="glass p-10 rounded-2xl shadow-2xl w-full max-w-md border border-cyan-700">
+    <h1 class="text-3xl font-extrabold mb-8 text-cyan-400 tracking-wide text-center">🌐 Web Manager</h1>
+
+    <form id="login-form" class="space-y-6">
+        <div>
+            <label for="username" class="block mb-2 text-cyan-300 font-semibold">Nom d'utilisateur</label>
+            <input type="text" id="username" name="username" required
+                   class="w-full rounded-lg bg-transparent border border-cyan-600 px-4 py-3
+                              text-cyan-100 placeholder-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-400
+                              transition" placeholder="Votre nom d'utilisateur">
+        </div>
+
+        <div>
+            <label for="password" class="block mb-2 text-cyan-300 font-semibold">Mot de passe</label>
+            <input type="password" id="password" name="password" required
+                   class="w-full rounded-lg bg-transparent border border-cyan-600 px-4 py-3
+                              text-cyan-100 placeholder-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-400
+                              transition" placeholder="Votre mot de passe">
+        </div>
+
+        <div id="login-error" class="text-red-400 font-semibold text-sm hidden text-center"></div>
+
+        <button type="submit"
+                class="w-full bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-semibold
+                           transition-shadow shadow-md">Se connecter</button>
+    </form>
+</div>
+
+<script src="assets/login.js"></script>
+</body>
+</html>

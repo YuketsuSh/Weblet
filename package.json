@@ -31,6 +31,8 @@
   "dependencies": {
     "body-parser": "^2.2.0",
     "chalk": "^4.1.2",
+    "cookie": "^1.0.2",
+    "crypto": "^1.0.1",
     "polka": "^0.5.2",
     "serve-static": "^2.2.0",
     "sirv": "^3.0.1"

@@ -4,19 +4,111 @@ const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const http = require('http');
-
+const crypto = require('crypto');
+const cookie = require('cookie');
 
 const PORT = 6696;
 const CONFIG_PATH = path.join(__dirname, 'cfg/sites.json');
+const USERS_PATH = path.join(__dirname, 'cfg/users.json');
+
+const SESSION_SECRET = 'webmanager-secret';
+let activeSessions = new Map();
 
 function loadConfig() {
     return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
 }
 
+function loadUsers() {
+    if (!fs.existsSync(USERS_PATH)) return [];
+    return JSON.parse(fs.readFileSync(USERS_PATH, 'utf-8'));
+}
+
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+function authMiddleware(req, res, next) {
+    const cookies = cookie.parse(req.headers.cookie || '');
+    const sessionId = cookies.sessionId;
+
+    if (req.url === '/login.html' && sessionId && activeSessions.has(sessionId)) {
+        res.writeHead(302, { Location: '/' });
+        return res.end();
+    }
+
+    if (req.url.startsWith('/auth/login') || req.url.startsWith('/auth/logout')) {
+        return next();
+    }
+
+    if (req.url.startsWith('/assets/') || req.url === '/favicon.ico') {
+        return next();
+    }
+
+    if (sessionId && activeSessions.has(sessionId)) {
+        req.user = activeSessions.get(sessionId);
+        return next();
+    }
+
+    if (req.url.startsWith('/api')) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Non authentifié' }));
+    }
+
+    if (req.url !== '/login.html') {
+        res.writeHead(302, { Location: '/login.html' });
+        return res.end();
+    }
+
+    next();
+}
+
 const app = polka();
 
-app.use('/', serveStatic(path.join(__dirname, 'webmanager-static')));
 app.use(bodyParser.json());
+app.use(authMiddleware);
+app.use('/', serveStatic(path.join(__dirname, 'webmanager-static')));
+
+app.post('/auth/login', (req, res) => {
+    const { username, password } = req.body;
+    const users = loadUsers();
+    const user = users.find(u => u.name === username);
+
+    if (!user || user.hash !== hashPassword(password)) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Identifiants invalides' }));
+    }
+
+    const sessionId = crypto.randomBytes(16).toString('hex');
+    activeSessions.set(sessionId, username);
+
+    res.writeHead(200, {
+        'Set-Cookie': cookie.serialize('sessionId', sessionId, {
+            httpOnly: true,
+            maxAge: 3600,
+            path: '/'
+        }),
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Credentials': 'true'
+    });
+    res.end(JSON.stringify({ success: true }));
+});
+
+app.post('/auth/logout', (req, res) => {
+    const cookies = cookie.parse(req.headers.cookie || '');
+    const sessionId = cookies.sessionId;
+
+    if (sessionId) activeSessions.delete(sessionId);
+
+    res.writeHead(200, {
+        'Set-Cookie': cookie.serialize('sessionId', '', {
+            httpOnly: true,
+            maxAge: 0,
+            path: '/'
+        }),
+        'Content-Type': 'application/json'
+    });
+    res.end(JSON.stringify({ success: true }));
+});
 
 app.get('/api/sites', (req, res) => {
     try {
@@ -46,7 +138,6 @@ app.get('/api/sites/:name', (req, res) => {
         res.end(JSON.stringify({ error: 'Erreur serveur.' }));
     }
 });
-
 
 app.post('/api/sites', (req, res) => {
     const { name, directory, port } = req.body;
